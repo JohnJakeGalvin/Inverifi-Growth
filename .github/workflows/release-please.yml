@@ -1,0 +1,40 @@
+on:
+  push:
+    branches:
+      - master
+name: release-please
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: GoogleCloudPlatform/release-please-action@v2
+        with:
+          # The usual GITHUB_TOKEN doesn't work since PRs created using it doesn't trigger GitHub actions builds.
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+          release-type: node
+          changelog-types: |
+            [
+              {
+                "type": "feat",
+                "section": "Features",
+                "hidden": false
+              },
+              {
+                "type": "fix",
+                "section": "Bug Fixes",
+                "hidden": false
+              },
+              {
+                "type": "build",
+                "section": "Build Updates",
+                "hidden": false
+              },
+              { "type": "chore", "section": "Chores", "hidden": false },
+              { "type": "ci", "section": "Continuous integration", "hidden": false },
+              { "type": "docs", "section": "Documentation", "hidden": false },
+              { "type": "perf", "section": "Performance", "hidden": false },
+              { "type": "refactor", "section": "Refactoring", "hidden": false },
+              { "type": "revert", "section": "Reverts", "hidden": false },
+              { "type": "style", "section": "Code style", "hidden": false },
+              { "type": "test", "section": "Tests", "hidden": false }
+            ]

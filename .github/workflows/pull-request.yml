@@ -1,0 +1,82 @@
+name: build pr request
+on: [pull_request]
+
+env:
+  PR_NUMBER: ${{ github.event.pull_request.number }}
+
+jobs:
+  build:
+
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - uses: actions/checkout@v2
+        # Setup the node environment
+      - name: Set the npm auth token
+        run: echo "//npm.pkg.github.com/:_authToken=${{ secrets.APPS_pat }}" >> .npmrc
+      - name: Node.js setup
+        uses: actions/setup-node@v2.1.4
+        with:
+          node-version: 16.x
+          always-auth: true
+          scope: '@invotra'
+          registry-url: https://npm.pkg.github.com/
+      - name: Install yarn
+        run: npm install -g yarn@^1
+      - name: Install dependencies
+        # --immutable
+        # Abort with an error exit code if the lockfile was to be modified
+        run: |
+          yarn install --immutable
+        env:
+          NODE_AUTH_TOKEN: ${{secrets.GH_ACCESS_TOKEN}}
+      - name: Run editorconfig checker
+        run: |
+          yarn editorconfig-checker
+      - name: Run file and directory name linter
+        run: |
+          yarn lint:fs
+      - name: Run style linter
+        run: |
+          yarn lint:css
+      - name: Invalidate apollo cache on deploy
+        run: |
+          echo APOLLO_SCHEMA_VESION=${{ github.run_id }} >> .env
+      - name: Select staging configuration
+        run: yarn run staging-config
+      - name: set the asset env
+        run: echo "ASSET_PATH=https://staging.workpaths.app/invotra/apps/template/versions/$PR_NUMBER/" >> $GITHUB_ENV
+      - run: yarn run build --if-present
+        env:
+          CI: false
+          REACT_APP_BASE_PATH: "/apps/template/"
+          REACT_APP_USE_SERVICE_WORKER: true
+          REACT_APP_ASSET_PATH: ${{ env.ASSET_PATH }}
+          SASS_PATH: "node_modules:src"
+      - name: output the pull_request number
+        run: |
+          echo ${{ env.PR_NUMBER }}
+      - name: Deploy to S3
+        uses: jakejarvis/s3-sync-action@master
+        with:
+          args: --acl public-read --delete
+        env:
+          AWS_S3_BUCKET: staging.workpaths.app
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.STAGING_AWS_REGION }}
+          SOURCE_DIR: "build"
+          DEST_DIR: invotra/apps/${{ secrets.APP_NAME }}/versions/${{ env.PR_NUMBER }}
+      - name: Invalidate cloudfront cache
+        uses: chetan/invalidate-cloudfront-action@master
+        env:
+          DISTRIBUTION: ${{ secrets.STAGING_DISTRIBUTION }}
+          PATHS: '/*'
+          AWS_REGION: ${{ secrets.STAGING_AWS_REGION }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}

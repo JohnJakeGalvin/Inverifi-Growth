@@ -1,0 +1,16 @@
+{
+    "region": "eu-west-1",
+    "userPool": "eu-west-1_YKVGMgT1b",
+    "userPoolBaseUri": "",
+    "clientId": "6h28mkqqlc7gcbra6h4r4oqcka",
+    "callbackUri": "https://staging.workpaths.app/callback",
+    "signoutUri": "https://staging.workpaths.app/",
+    "tokenScopes": [
+        "openid",
+        "email",
+        "profile"
+    ],
+    "graphqlUri": "https://q7ex9pidy8.execute-api.eu-west-1.amazonaws.com/live/graphql",
+    "chargebeeSite": "invotra-test",
+    "chargebeeProduct": "standard"
+}

@@ -1,0 +1,16 @@
+{
+    "region": "",
+    "userPool": "",
+    "userPoolBaseUri": "",
+    "clientId": "",
+    "callbackUri": "",
+    "signoutUri": "",
+    "tokenScopes": [
+        "openid",
+        "email",
+        "profile"
+    ],
+    "graphqlUri": "",
+    "chargebeeSite": "",
+    "chargebeeProduct": ""
+}

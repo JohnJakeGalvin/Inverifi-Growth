@@ -1,0 +1,71 @@
+# This is a basic workflow to help you get started with Actions
+
+name: Automated Rainforest CLI
+
+concurrency: Rainforest
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow when a pull request is closed
+  pull_request:
+    types: [closed]
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    # Checks that the PR is merged and has the Rainforest label
+    if: github.event.pull_request.merged == true && contains(github.event.pull_request.labels.*.name, 'Rainforest Smoke Test')
+    name: Rainforest Automated Smoke Test
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+
+      # Runs an action to ensure the job waits until the Staging deploy completes
+      - name: Wait for staging deploy to finish
+        uses: lewagon/wait-on-check-action@v0.2
+        with:
+          ref: master
+          running-workflow-name: Node.js CI
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          allowed-conclusions: success
+
+      # Runs a set of commands to install the Rainforest CLI
+      - name: Install Rainforest CLI
+        run: |
+          curl -O https://bin.equinox.io/c/htRtQZagtfg/rainforest-cli-stable-linux-amd64.tgz
+          tar -xzf rainforest-cli-stable-linux-amd64.tgz
+          mv rainforest /usr/local/bin
+          chmod +x /usr/local/bin/rainforest
+          rm rainforest-cli-stable-linux-amd64.tgz
+      # Runs a command to kick off a Rainforest run group (needs to be updated with new run group for app)
+      - name: Run Rainforest run group
+        run: rainforest run --run-group 9156 --junit-file results.xml
+        env:
+          RAINFOREST_API_TOKEN: ${{ secrets.RAINFOREST_API_TOKEN }}
+
+      # Runs a command to set the current date as env variable.To be used in the file name
+      - name: Set current date
+        if: always()
+        run: echo "CURRENT_DATE=$(date +'%d-%m-%Y')" >> ${GITHUB_ENV}
+
+      # Runs an action to store the test results as an artifact
+      - name: Upload Rainforest test results
+        if: always()
+        uses: actions/upload-artifact@v2
+        with:
+          name: RF_Smoke_Test-${{ env.CURRENT_DATE }}-results-file
+          path: results.xml
+
+      # Runs an action to diplay the test results
+      - name: Publish Unit Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v1
+        if: always()
+        with:
+          check_name: "Rainforest Test Results"
+          files: results.xml

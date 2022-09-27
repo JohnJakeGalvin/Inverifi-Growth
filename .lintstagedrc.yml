@@ -1,0 +1,3 @@
+'*': yarn lint:editorconfig && yarn lint:fs
+src/**/*.{js,jsx,ts,tsx}: yarn lint:js
+src/**/*.scss: yarn lint:css

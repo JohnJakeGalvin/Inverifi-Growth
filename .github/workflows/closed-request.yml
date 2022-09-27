@@ -1,0 +1,29 @@
+name: Template App remove pull request
+on:
+  pull_request:
+    types: [ closed ]
+
+env:
+  PR_NUMBER: ${{ github.event.pull_request.number }}
+
+jobs:
+  build:
+
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Remove from S3
+        uses: vitorsgomes/s3-rm-action@master
+        with:
+          args: --recursive
+        env:
+          AWS_S3_BUCKET: staging.workpaths.app
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.STAGING_AWS_REGION }}
+          PATH_TO_DELETE: invotra/apps/${{ secrets.APP_NAME }}/versions/${{ env.PR_NUMBER }}
