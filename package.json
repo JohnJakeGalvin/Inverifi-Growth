@@ -16,7 +16,7 @@
     "@invotra/typedoc-plugin-doc-coverage": "^0.2.3",
     "@ls-lint/ls-lint": "^1.11.2",
     "@mui/icons-material": "^5.10.3",
-    "@mui/lab": "^5.0.0-alpha.99",
+    "@mui/lab": "^5.0.0-alpha.118",
     "@mui/material": "^5.10.5",
     "@mui/x-date-pickers": "^5.0.1",
     "@types/node": "^18.7.17",
